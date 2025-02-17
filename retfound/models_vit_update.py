@@ -6,6 +6,14 @@
 
 # --------------------------------------------------------
 
+## Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+
+# Modified by Yating Pan (University of Zurich)
+# This file is distributed under the terms of the original license.
+
+# --------------------------------------------------------
+
 # Vision Transformer with Layer-wise Relevance Propagation (LRP) for Ophthalmic Image Diagnosis
 
 import torch
@@ -13,6 +21,19 @@ import torch.nn as nn
 from einops import rearrange
 from functools import partial
 import torch.nn.functional as F
+
+import sys
+import os
+
+# Set the baseline to the path where the Transformer-Explainability is cloned
+# Ideally, Transformer-Explainability should be cloned at the same level as RETFound_MAE
+BASELINE_PATH = "/data/yapan/Transformer-Explainability"
+
+# Ensure the baseline path is in sys.path
+if BASELINE_PATH not in sys.path:
+    sys.path.insert(0, BASELINE_PATH)
+
+print("DEBUG: sys.path =", sys.path)  # Check if the path is added
 
 # Custom layers for relevance propagation (from modules.layers_ours)
 from baselines.ViT.weight_init import trunc_normal_
@@ -364,6 +385,5 @@ class VisionTransformerLRP(VisionTransformer):
 # Helper function to create the model
 def vit_large_patch16_with_lrp(**kwargs):
     return VisionTransformerLRP(
-        patch_size=16, embed_dim=1024, depth=24, num_heads=16, mlp_ratio=4, qkv_bias=True,
-        **kwargs
+        patch_size=16, embed_dim=1024, depth=24, num_heads=16, mlp_ratio=4, qkv_bias=True,**kwargs
     )
