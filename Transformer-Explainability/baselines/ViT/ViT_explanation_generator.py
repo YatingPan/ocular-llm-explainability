@@ -29,7 +29,6 @@ class LRP:
             index = np.argmax(output.cpu().data.numpy(), axis=-1)
 
         one_hot = np.zeros((1, output.size()[-1]), dtype=np.float32)
-
         one_hot[0, index] = 1
         one_hot_vector = one_hot
         one_hot = torch.from_numpy(one_hot).requires_grad_(True)
