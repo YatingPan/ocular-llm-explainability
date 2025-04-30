@@ -4,11 +4,27 @@
 
 This framework integrates the RETFound model with Transformer-Explainability techniques to generate saliency maps for retinal fundus image analysis. It helps visualize which regions of the retinal image the model focuses on when making predictions, providing valuable interpretability for both classification and regression tasks.
 
-The framework generates saliency maps for regression and classification tasks. Besides generating single saliency map for each input image, it also generates three types of overall saliency visualizations:
+The framework generates saliency maps for regression and classification tasks. Besides generating a single saliency map for each input image, it also generates three types of overall saliency visualizations:
 
 1. **Pixel-level overall saliency map**: Shows the most important highlight regions (top 10%) at pixel level across all processed images
 2. **Patch-level overall saliency map (discrete)**: Shows importance at the transformer patch level with discrete boundaries
 3. **Patch-level overall saliency map (smoothed)**: Provides an interpolated visualization of patch-level importance
+
+### Examples of Overall Saliency Maps
+
+Below are examples from regression tasks, showing overall saliency maps for age prediction and optic disc angle prediction:
+
+#### Age Prediction
+![Age Prediction Overall Saliency Maps](./overall_saliencymaps_examples/regression_age.png)
+
+#### Optic Disc Angle Prediction
+![Angle Prediction Overall Saliency Maps](./overall_saliencymaps_examples/regression_angle.png)
+
+### Individual Saliency Map with Anatomical References
+
+This example shows a single saliency map overlaid with segmented vessels (arteries in red, veins in green) and optic disc (yellow):
+
+![Saliency Map with Vessel and Disc Segmentation](./saliencymap_vessels_disc_examples/2931771_21016_1_0_overlay.png)
 
 ## Main Scripts
 
@@ -203,23 +219,20 @@ cd ocular-llm-explainability
 ```
 
 1. Set up the RETFound environment:
-    - First, clone the RETFound repository and follow its installation instructions:
     
-    ```bash
-    cd RETFound_MAE
-    # Follow RETFound installation instructions at https://github.com/rmaphoh/RETFound_MAE/tree/main to install retfound conda env
-    
-    ```
+  ```bash
+  cd RETFound_MAE
+  # Follow RETFound installation instructions at https://github.com/rmaphoh/RETFound_MAE/tree/main to install retfound conda env  
+  ```
     
 2. Install Transformer-Explanability requirements in retfound conda env
 
-```bash
-conda activate retfound
-cd ..
-cd Transformer-Explainability
-pip install -r requirements.txt
-
-```
+  ```bash
+  conda activate retfound
+  cd ..
+  cd Transformer-Explainability
+  pip install -r requirements.txt
+  ```
 
 ### Configuration
 
@@ -230,7 +243,6 @@ Before running the scripts, update the `BASELINE_PATH` in both `saliencymap_regr
 BASELINE_PATH = "/path/to/your/Transformer-Explainability"
 if BASELINE_PATH not in sys.path:
     sys.path.insert(0, BASELINE_PATH)
-
 ```
 
 The framework can be used to generate saliency maps for both regression and classification tasks:
@@ -241,9 +253,8 @@ The framework can be used to generate saliency maps for both regression and clas
 python saliencymap_regression.py \
     --checkpoint_path /path/to/checkpoint-best.pth \
     --input_folder /path/to/test_images \
-    --metric_name "Age" \
+    --metric_name "Value" \
     --method transformer_attribution
-
 ```
 
 ### Classification Tasks
@@ -270,9 +281,8 @@ def get_class_labels(num_classes):
 python saliencymap_classification.py \
     --checkpoint_path /path/to/checkpoint-best.pth \
     --input_folder /path/to/test_images \
-    --class_names "No DR,Mild,Moderate,Severe,Proliferative" \
+    --class_names "class" \
     --method transformer_attribution
-
 ```
 
 ## Output Structure
@@ -297,8 +307,8 @@ output_folder/
 
 The `saliencymap_regression.py` provide numerous parameters for customization:
 
-- **`-checkpoint_path`: Path to the RETFound model checkpoint (required)**
-- **`-input_folder`: Folder containing retinal fundus images (required)**
+- `-checkpoint_path`: Path to the RETFound model checkpoint (required)
+- `-input_folder`: Folder containing retinal fundus images (required)
 - `-reference_image`: Path to a reference retina fundus image for overall saliency map overlay and visualization. The scripts will automatically select a good quality image from the input_folder as reference_image if there is no specification.
 - `-input_size`: Input image size (default: 224, set by RETFound)
 - `-drop_rate`: Dropout rate for the model (default: 0.0, set by RETFound)
