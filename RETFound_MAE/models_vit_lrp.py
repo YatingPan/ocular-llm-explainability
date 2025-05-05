@@ -355,7 +355,7 @@ class VisionTransformer(timm.models.vision_transformer.VisionTransformer):
             tokens = x[:, 1:, :]  # All tokens except CLS
             x = tokens.mean(dim=1, keepdim=True)  # Global pool           
             x = self.fc_norm(x)
-            # x = self.pool(x, dim=1, indices=torch.tensor(0, device=x.device))
+            x = self.pool(x, dim=1, indices=torch.tensor(0, device=x.device))
             x = x.squeeze(1)  # Remove the keepdim
             x = self.head(x)
         else:
@@ -386,14 +386,18 @@ class VisionTransformer(timm.models.vision_transformer.VisionTransformer):
         if self.global_pool:  
             # Apply fc_norm - Note: this won't backpropagate to the CLS token
             #cam = self.pool.relprop(cam, **kwargs)
+            cam = self.pool.relprop(cam, **kwargs)
             cam = self.fc_norm.relprop(cam, **kwargs)                    
             # Expand relevance to all tokens (including CLS) for proper backprop
             # This is needed because we pooled all non-CLS tokens, so relevance
             # must be distributed back to all of them
+            
+            
             expanded_cam = torch.zeros((cam.shape[0], 
                                self.patch_embed.num_patches + 1, 
                                cam.shape[2]), 
                               device=cam.device)    
+            
             expanded_cam[:, 1:, :] = cam / self.patch_embed.num_patches
             cam = expanded_cam   
         else:
@@ -405,7 +409,7 @@ class VisionTransformer(timm.models.vision_transformer.VisionTransformer):
             cam = blk.relprop(cam, **kwargs)
             
         # Propagate through position embedding addition
-        (cam, _) = self.add.relprop(cam, **kwargs)
+        # (cam, _) = self.add.relprop(cam, **kwargs)  # remove because the Transformer-Explainability repo does not have this
             
         # For transformer_attribution method (our method), use attention rollout
         if method == "transformer_attribution" or method == "grad":
