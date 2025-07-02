@@ -15,9 +15,9 @@ For an input folder of retina fundus images, this script generates:
 - Histogram of prediction distribution
 
 Usage:
-python saliency_regression.py \
-    --checkpoint_path /path/to/checkpoint-best.pth \
-    --input_folder /path/to/test_images \
+python saliencymap_regression.py \
+    --checkpoint_path /NVME/scratch/dave/VD_fold_1/fold1/checkpoint-best.pth \
+    --input_folder /HDD/data/yating/200_img \
     --method transformer_attribution
 """
 
@@ -37,7 +37,7 @@ from tqdm import tqdm
 from scipy.interpolate import griddata
 
 # Set path to Transformer-Explainability -> Update this to your local path
-BASELINE_PATH = "/data/JH/yapan/ocular-llm-explainability/Transformer-Explainability"
+BASELINE_PATH = "/HDD/data/yating/ocular-llm-explainability/Transformer-Explainability"
 if BASELINE_PATH not in sys.path:
     sys.path.insert(0, BASELINE_PATH)
 

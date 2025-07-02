@@ -12,13 +12,10 @@ Vision Transformer (ViT) model with Layer-wise Relevance Propagation (LRP) with 
 visualization techniques.
 
 Usage:
-python saliencymap-multiclass-enhanced.py \
-    --checkpoint_path /path/to/checkpoint-best.pth \
-    --input_folder /path/to/test_images \
-    --gpu_ids 0 \
-    --use_thresholding \
-    --num_classes 5 \
-    --top_k 1
+python saliencymap_classification.py \
+    --checkpoint_path /NVME/scratch/dave/VD_fold_1/fold1/checkpoint-best.pth \
+    --input_folder /HDD/data/yating/200_img \
+    --num_classes 1
 """
 
 import os
@@ -27,7 +24,7 @@ import argparse
 import traceback
 
 # Set path to Transformer-Explainability
-BASELINE_PATH = "/data/JH/yapan/ocular-llm-explainability/Transformer-Explainability"
+BASELINE_PATH = "/HDD/data/yating/ocular-llm-explainability/Transformer-Explainability"
 if BASELINE_PATH not in sys.path:
     sys.path.insert(0, BASELINE_PATH)
 
@@ -46,16 +43,11 @@ parser.add_argument("--debug", action="store_true", help="Print debug informatio
 parser.add_argument("--alpha", type=float, default=0.7, help="Transparency factor for high importance areas (0.0-1.0)")
 parser.add_argument("--min_alpha", type=float, default=0.3, help="Minimum transparency for low importance areas (0.0-1.0)")
 parser.add_argument("--cmap", type=str, default="jet", help="Colormap for heatmaps (e.g., 'jet', 'viridis', 'inferno')")
+parser.add_argument("--output_folder", type=str, default=None, help="Output folder for saliency maps")
 args = parser.parse_args()
 
 # Ensure CUDA_VISIBLE_DEVICES is set before importing torch
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_ids
-
-import torch  # Now PyTorch will recognize the updated GPU visibility
-
-# Use CPU for debugging or GPU otherwise
-device = torch.device("cpu" if args.debug else f"cuda:{args.gpu_ids.split(',')[0]}")
-print(f"Using device: {device}")
 
 import torch
 import numpy as np
@@ -76,8 +68,12 @@ from baselines.ViT.ViT_explanation_generator import LRP
 # Import the image transformation function from RETFound_MAE
 from RETFound_MAE.util.datasets import build_transform
 
+# Use CPU for debugging or GPU otherwise
+device = torch.device("cpu" if args.debug else f"cuda:{args.gpu_ids.split(',')[0]}")
+print(f"Using device: {device}")
+
 # Output folders, where the processed images, saliency maps, and predictions will be saved
-output_folder = os.path.join(args.input_folder, "gl_class")
+output_folder = args.output_folder if args.output_folder else os.path.join(args.input_folder, "d")
 saliency_output_folder = os.path.join(output_folder, "saliency_maps")
 processed_image_folder = os.path.join(output_folder, "processed_inputs")
 overall_folder = os.path.join(output_folder, "overall")  # New folder for overall visualizations
@@ -89,9 +85,11 @@ os.makedirs(overall_folder, exist_ok=True)  # Create overall folder
 
 # Example: Class labels (customize as needed)
 class_labels = {
-    0: 'no glaucoma',
-    1: 'early glaucoma',
-    2: 'advanced glaucoma'
+            0: 'No DR',
+            1: 'Mild DR',
+            2: 'Moderate DR',
+            3: 'Severe DR',
+            4: 'Proliferative DR'
 }
 
 def set_seed(seed):
@@ -110,20 +108,22 @@ def load_model(checkpoint_path, input_size, drop_rate, global_pool, num_classes)
         drop_rate=drop_rate,
         global_pool=global_pool
     )
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    # Load checkpoint
+    checkpoint = torch.load(args.checkpoint_path, map_location=device, weights_only=False)
     
+    # Handle different checkpoint formats
     if 'model' in checkpoint:
         model.load_state_dict(checkpoint['model'], strict=False)
     else:
         model.load_state_dict(checkpoint, strict=False)
 
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"Number of params (M): {n_parameters / 1.e6:.2f}")
+    print(f"Number of params: {n_parameters / 1.e6:.2f}M")
 
     # Set to eval mode for inference
     model.eval()
     model.to(device)
-    print(f"Model loaded from checkpoint: {checkpoint_path}")
+    print(f"Model loaded from checkpoint: {args.checkpoint_path}")
 
     return model
 
